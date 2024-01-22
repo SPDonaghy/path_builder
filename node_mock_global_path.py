@@ -5,7 +5,8 @@ import os
 from datetime import datetime
 
 import numpy as np
-from msg import HelperLatLon, Path
+from _path import Path
+from _helper_lat_lon import HelperLatLon
 from coord_systems import GEODESIC, meters_to_km
 
 
@@ -49,7 +50,7 @@ def generate_path(
 
     # npts returns a path with neither pos nor dest included
     global_path_tuples = GEODESIC.npts(lon1=lon1, lat1=lat1, lon2=lon2, lat2=lat2, npts=n)
-
+    
     # npts returns (lon,lat) tuples, its backwards for some reason
     for lon, lat in global_path_tuples:
         global_path.waypoints.append(HelperLatLon(latitude=lat, longitude=lon))
@@ -59,7 +60,7 @@ def generate_path(
 
     if write:
         write_to_file(file_path=file_path, global_path=global_path)
-
+    print(len(global_path.waypoints))
     return global_path
 
 

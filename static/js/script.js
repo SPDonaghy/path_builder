@@ -47,6 +47,8 @@ function refresh(){
     }
 
     update_waypoints_table();
+
+    console.log(waypoints)
 }
 // Button event handlers
 function clear_path(){
@@ -57,6 +59,8 @@ function clear_path(){
         waypoints = [];
         refresh();
     }
+
+    console.log(waypoints)
 }
 function import_file(){
 
@@ -104,30 +108,35 @@ function import_file(){
 
 }
 function interpolate(){
-        var confirmation = confirm("Are you sure you want to interpolate the path? You cannot undo this action.");
 
-        if (confirmation) {
-            var interval_spacing = window.prompt("Enter the desired interval spacing in km:", "30");
-            fetch('/interpolate_path', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ waypoints: waypoints, interval_spacing: interval_spacing }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success'){
-                    waypoints = data.waypoints;
-                    refresh();
-                } else {
-                    alert('Error interpolating waypoints. Please check the server logs for details.');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
+    if (waypoints.length < 2) {
+        alert('Please add at least two waypoints to export.');
+        return;
+    }
+    var confirmation = confirm("Are you sure you want to interpolate the path? You cannot undo this action.");
+
+    if (confirmation) {
+        var interval_spacing = window.prompt("Enter the desired interval spacing in km:", "30");
+        fetch('/interpolate_path', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ waypoints: waypoints, interval_spacing: interval_spacing, count:waypoints.length }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success'){
+                waypoints = data.waypoints;
+                refresh();
+            } else {
+                alert('Error interpolating waypoints. Please check the server logs for details.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
 }
 function delete_paths(){
 
@@ -276,4 +285,8 @@ function update_waypoints_table() {
         cell3.innerHTML += `<button type="button" class="btn" onclick="edit_waypoint(${index})"><i class="fa fa-pencil"></i></button>`;
         cell3.style.display = "flex";
     });
+
+    var count = document.getElementById("count");
+    // Clear existing rows
+    count.innerHTML = waypoints.length
 }

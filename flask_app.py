@@ -15,10 +15,12 @@ import os
 import re
 import webbrowser
 from typing import Dict, List, Tuple
+from os import walk
 
 import numpy as np
 import plotly.graph_objects as go
-from msg import HelperLatLon, Path
+from _path import Path
+from _helper_lat_lon import HelperLatLon
 from flask import Flask, jsonify, render_template, request
 
 from node_mock_global_path import (
@@ -33,10 +35,22 @@ DEFAULT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def main():
+    
+    # extra_dirs is used to reload the server when a file is changed for debugging
+    extra_dirs = [
+        "/workspaces/path_builder",
+    ]
+    extra_files = extra_dirs[:]
+    for extra_dir in extra_dirs:
+        for dirname, dirs, files in walk(extra_dir):
+            for filename in files:
+                filename = os.path.join(dirname, filename)
+                if os.path.isfile(filename):
+                    extra_files.append(filename)
 
     webbrowser.open("http://127.0.0.1:5000")
     # opens two tabs on startup when debug=True
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=True, extra_files=extra_files)
 
 
 @app.route("/")
@@ -153,40 +167,38 @@ def _handle_delete(data):
 def _handle_interpolate(data):
     waypoints = data.get("waypoints", [])
     interval_spacing = float(data.get("interval_spacing", 30.0))
-
+    
     # convert from json to list of HelperLatLon
     waypoints = [
         (HelperLatLon(latitude=float(item["lat"]), longitude=float(item["lon"])))
         for item in waypoints
     ]
-
+    
     # convert to Path, to pass to interpolator
     path = Path(waypoints=waypoints)
 
     # pop out the first waypoint as point1, since the interpolator will add it to the start of path
     point1 = path.waypoints.pop(0)
 
-    try:
-        path_spacing = calculate_interval_spacing(pos=point1, waypoints=path.waypoints)
-        path = _interpolate_path(
-            global_path=path,
-            interval_spacing=interval_spacing,
-            pos=point1,
-            path_spacing=path_spacing,
-        )
-        # add first waypoint back to the start of path
-        path.waypoints = [point1] + path.waypoints
-        # convert waypoints to serializable format
-        waypoints = [
-            {"lat": float(item.latitude), "lon": float(item.longitude)} for item in path.waypoints
-        ]
-        return {
-            "status": "success",
-            "message": "Waypoints exported successfully",
-            "waypoints": waypoints,
-        }
-    except Exception as e:
-        return {"status": "error", "message": f"Error exporting waypoints: {str(e)}"}
+    
+    path_spacing = calculate_interval_spacing(pos=point1, waypoints=path.waypoints)
+    path = _interpolate_path(
+        global_path=path,
+        interval_spacing=interval_spacing,
+        pos=point1,
+        path_spacing=path_spacing,
+    )
+    # add first waypoint back to the start of path
+    path.waypoints = [point1] + path.waypoints
+    # convert waypoints to serializable format
+    waypoints = [
+        {"lat": float(item.latitude), "lon": float(item.longitude)} for item in path.waypoints
+    ]
+    return {
+        "status": "success",
+        "message": f"{len(waypoints)} Waypoints exported successfully",
+        "waypoints": waypoints,
+    }
 
 
 def delete_files(key=None):
