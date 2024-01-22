@@ -47,8 +47,6 @@ function refresh(){
     }
 
     update_waypoints_table();
-
-    console.log(waypoints)
 }
 // Button event handlers
 function clear_path(){
@@ -288,5 +286,89 @@ function update_waypoints_table() {
 
     var count = document.getElementById("count");
     // Clear existing rows
-    count.innerHTML = waypoints.length
+    count.innerHTML = "# of Waypoints: " + waypoints.length
+}
+
+function openModal() {
+    var modal = document.getElementById('myModal');
+    modal.style.display = 'block';
+  }
+
+  function closeModal() {
+    var modal = document.getElementById('myModal');
+    modal.style.display = 'none';
+  }
+
+  function downloadPath() {
+    if (waypoints.length === 0) {
+        alert('No waypoints to download.');
+        return;
+    }
+
+    // Create CSV content header
+    var csvContent = 'Latitude,Longitude\n';
+
+    // Generate CSV content from waypoints
+    waypoints.forEach(function (point) {
+        csvContent += point.lat + ',' + point.lon + '\n';
+    });
+
+    
+
+    var blob = new Blob([csvContent], { type: 'text/csv' });
+    var url = window.URL.createObjectURL(blob);
+
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'path.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function uploadPath() {
+    closeModal();
+    var fileInput = document.getElementById('import_input');
+    var file = fileInput.files[0];
+
+    if (file) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            var csvContent = e.target.result;
+
+            // Split the CSV content into rows
+            var rows = csvContent.split('\n');
+            console.log('Uploaded CSV content:', rows[1].split(",")[0]);
+            
+            clear_path()
+
+            // Process each row (excluding the header row)
+            for (var i = 1; i < rows.length-1; i++) {
+                // Split the row into columns
+                var columns = rows[i].split(',');
+
+                console.log(columns)
+
+                // Extract lat and lon values (assuming they are in columns 0 and 1)
+                var lat = parseFloat(columns[0]);
+                var lon = parseFloat(columns[1]);
+
+                // Check if lat and lon are valid numbers before pushing into waypoints
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    waypoints.push({ lat: lat, lon: lon });                }
+
+                else {
+                    alert("Invalid points in the csv data. Please check the file.")
+                    console.log(lat)
+                    console.log(lon)
+                    return
+                }
+            }
+
+            refresh()
+        };
+        reader.readAsText(file);
+    } else {
+        alert('Please select a CSV file to upload.');
+    }
 }
