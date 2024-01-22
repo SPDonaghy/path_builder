@@ -49,11 +49,12 @@ function refresh(){
     update_waypoints_table();
 }
 // Button event handlers
-function clear_path(){
-
-    var confirmation = confirm("Are you sure you want to clear all waypoints? You cannot undo this action.");
-
-    if (confirmation) {
+function clear_path(conf){
+    if(conf){
+        var confirmation = confirm("Are you sure you want to clear all waypoints? You cannot undo this action.");
+    }
+    
+    if (confirmation||!conf) {
         waypoints = [];
         refresh();
     }
@@ -340,7 +341,7 @@ function openModal() {
             var rows = csvContent.split('\n');
             console.log('Uploaded CSV content:', rows[1].split(",")[0]);
             
-            clear_path()
+            clear_path(false)
 
             // Process each row (excluding the header row)
             for (var i = 1; i < rows.length-1; i++) {

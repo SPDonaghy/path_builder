@@ -8,7 +8,6 @@
 #main_view {
     height: 500px;
     display:flex;
-    margin-top: 20px;
 }
 #banner {
     background-color: #1665a2;
@@ -130,4 +129,21 @@ th {
     color: black;
     text-decoration: none;
     cursor: pointer;
+  }
+
+  .info {
+
+    background-color: #1665a2;
+    overflow: hidden;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0px 0px 8px 0px;
+    flex-direction: column;
+    color: white;
+  }
+
+  .info-text{
+    margin: 0px 10% 24px;
   }
